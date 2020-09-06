@@ -1,6 +1,6 @@
+from bs4 import BeautifulSoup # bs4 is the only import that's not from the stdlib
 from io import StringIO
 import random
-from bs4 import BeautifulSoup
 import time
 import math
 from wsgiref import simple_server
