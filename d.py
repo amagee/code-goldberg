@@ -1,6 +1,9 @@
 from io import StringIO
 import random
 from bs4 import BeautifulSoup
+import time
+import math
+
 
 d = {
     '_': [
@@ -38,6 +41,7 @@ for k, v in d.items():
 s = "".join(l)
 
 lines = s.split("\n")
+max_line_length = max([len(l) for l in lines])
 
 sio = StringIO()
 
@@ -52,36 +56,72 @@ soup = BeautifulSoup(sio.getvalue(), 'html.parser')
 pretty = soup.prettify()
 
 
-colours = dict(
-    header = '\033[95m',
-    okblue = '\033[94m',
-    okgreen = '\033[92m',
-    warning = '\033[93m',
-    fail = '\033[91m',
-    endc = '\033[0m',
-    bold = '\033[1m',
-)
+bold = "\x1b[1m";
+
+curlyboi_colours = [
+ "\x1b[38;5;112m", # green
+ "\x1b[38;5;11m", # yellow
+ "\x1b[38;5;214m", # orange
+ "\x1b[38;5;1m", # red
+ "\x1b[38;5;17m", # blue
+]
 
 
-"""
-# Not yet
-print("\n" * 5)
-print("\033[s", end="") # save
-print("\033[5A", end="") # 5 up
-print("\033[999D", end="") # 999 left
-print("hello", end="")
-print("\033[u", end="") # restore
-print("\033[3A", end="") # 5 up
-print("\033[999D", end="") # 999 left
-print("\033[10C", end="") # 10 right
-print("bye", end="")
-"""
+rand_colours = [
+    '\033[95m',
+    '\033[94m',
+    '\033[92m',
+    '\033[93m',
+    '\033[91m',
+]
+                           
 
+characters = []
 
+line_index = 0
+char_index = 0
 for line in pretty.split("\n"):
     if line.startswith("</div>"):
-        print("")
+        line_index += 1
+        char_index = 0
     elif "data-char" in line:
-        print(random.choice(list(colours.values())), end='')
-        print(line[line.index('"') + 1], end='')
+        char = line[line.index('"') + 1]
+        characters.append((line_index, char_index, char))
+        char_index += 1
+
+
+class CurlyBoiColourGetter:
+    def __init__(self, num_curlybois):
+        self.curlybois = curlyboi_colours * num_curlybois
+
+    def __call__(self, line_index, char_index, char):
+        return self.curlybois[math.floor(char_index * len(self.curlybois) / max_line_length)]
+
+
+def get_colour_2(line_index, char_index, char):
+    return random.choice(rand_colours)
+
+
+random.shuffle(characters)
+
+print("\n" * 10)
+print("\033[s", end="") # save
+
+for i in range(0, 10):
+    for color_getter in (CurlyBoiColourGetter(random.randint(1, 5)), get_colour_2):
+        for line_index, char_index, char in characters:
+            print("\033[u", end="") # restore
+            print("\033[s", end="") # save
+            print(f"\033[{7 - line_index}A", end="") # up
+            print("\033[999D", end="") # 999 left
+            print(f"\033[{char_index + 1}C", end="") # right
+
+            colour = color_getter(line_index, char_index, char)
+            print(bold, end='')
+            print(colour, end='')
+            print(char, end="", flush=True)
+            time.sleep(0.003)
+        time.sleep(0.5)
+
+print("\n" * 7)
 
